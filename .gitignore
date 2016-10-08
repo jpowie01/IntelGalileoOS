@@ -1,2 +1,8 @@
 # Development
-virtual-hdd
+build
+
+# IDE
+.idea
+
+# System
+.DS_Store

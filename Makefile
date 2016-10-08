@@ -1,23 +1,51 @@
-# 
-# Created by Jakub Powierza, 2016
-# 
+#
+# IntelGalileoOS
+# Created by: Jakub Powierza
+#
 
-# Constant environment variables
-CPU=qemu32
-BIOS=bin/uefi.bin
-HDD_SYSTEM=fat
-HDD_DIR=virtual-hdd
+ARCH            = $(shell uname -m | sed s,i[3456789]86,ia32,)
 
-# Targets
-all: develop run
+OBJS            = src/main.o
+TARGET          = build/main.efi
+
+EFIINC          = lib/gnu-efi/inc
+EFIINCS         = -I$(EFIINC) -I$(EFIINC)/$(ARCH) -I$(EFIINC)/protocol
+LIB             = lib/gnu-efi/ia32/lib
+EFILIB          = lib/gnu-efi/gnuefi
+EFI_CRT_OBJS    = $(EFILIB)/crt0-efi-$(ARCH).o
+EFI_LDS         = $(EFILIB)/elf_$(ARCH)_efi.lds
+
+CFLAGS          = $(EFIINCS) -fno-stack-protector -fpic \
+		  -fshort-wchar -mno-red-zone -Wall
+
+ifeq ($(ARCH),x86_64)
+  CFLAGS += -DEFI_FUNCTION_WRAPPER
+endif
+
+LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
+		  -Bsymbolic -L $(EFILIB) -L $(LIB) $(EFI_CRT_OBJS)
+
+all: $(TARGET)
+
+build: $(TARGET)
 
 develop:
-	mkdir $(HDD_DIR)
+	mkdir build
+
+src/%.so: $(OBJS)
+	ld $(LDFLAGS) $(OBJS) -o $@ -l:libefi.a -l:libgnuefi.a
+
+build/%.efi: src/%.so
+	objcopy -j .text -j .sdata -j .data -j .dynamic \
+		-j .dynsym  -j .rel -j .rela -j .reloc \
+		--target=efi-app-$(ARCH) $^ $@
 
 run:
-	qemu-system-x86_64 -cpu $(CPU) -bios $(BIOS) -hda $(HDD_SYSTEM):$(HDD_DIR)
+	qemu-system-i386 -bios bin/OVMF.fd -hda fat:build
 
 clean:
-	rm -rf $(HDD_DIR)
+	rm -rf build
+	rm -f *.o
+	rm -f *.so
 
-.PHONY: all develop run clean
+.PHONY: clean build run
