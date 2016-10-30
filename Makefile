@@ -5,7 +5,7 @@
 
 ARCH            = $(shell uname -m | sed s,i[3456789]86,ia32,)
 
-OBJS            = src/main.o
+OBJS            = src/main.o src/PageDirectory.o src/AssemblyHelper.o
 TARGET          = build/main.efi
 
 EFIINC          = lib/gnu-efi/inc
@@ -15,15 +15,13 @@ EFILIB          = lib/gnu-efi/gnuefi
 EFI_CRT_OBJS    = $(EFILIB)/crt0-efi-$(ARCH).o
 EFI_LDS         = $(EFILIB)/elf_$(ARCH)_efi.lds
 
-CFLAGS          = $(EFIINCS) -fno-stack-protector -fpic \
-		  -fshort-wchar -mno-red-zone -Wall
+CFLAGS          = $(EFIINCS) -fno-stack-protector -fpic -fshort-wchar -mno-red-zone -Wall -masm=intel
 
 ifeq ($(ARCH),x86_64)
-  CFLAGS += -DEFI_FUNCTION_WRAPPER
+	CFLAGS += -DEFI_FUNCTION_WRAPPER
 endif
 
-LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
-		  -Bsymbolic -L $(EFILIB) -L $(LIB) $(EFI_CRT_OBJS)
+LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared -Bsymbolic -L $(EFILIB) -L $(LIB) $(EFI_CRT_OBJS)
 
 all: $(TARGET)
 
@@ -48,4 +46,4 @@ clean:
 	rm -f *.o
 	rm -f *.so
 
-.PHONY: clean build run
+.PHONY: all build develop run clean
