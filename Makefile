@@ -6,6 +6,7 @@
 ARCH            = $(shell uname -m | sed s,i[3456789]86,ia32,)
 
 OBJS            = src/main.o src/PageDirectory.o src/AssemblyHelper.o
+HEADERS			= src/PageDirectory.h src/AssemblyHelper.h
 TARGET          = build/main.efi
 
 EFIINC          = lib/gnu-efi/inc
@@ -30,7 +31,7 @@ build: $(TARGET)
 develop:
 	mkdir build
 
-src/%.so: $(OBJS)
+src/%.so: $(OBJS) $(HEADERS)
 	ld $(LDFLAGS) $(OBJS) -o $@ -l:libefi.a -l:libgnuefi.a
 
 build/%.efi: src/%.so
