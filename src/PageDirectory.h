@@ -32,8 +32,14 @@ typedef uint32_t PageEntry;
 #define PAGE_TABLE_SIZE         PAGE_TABLE_LENGTH * PAGE_ENTRY_SIZE
 #define PAGE_SIZE               4096  // 4 KB
 
-PageEntry createTableEntry(void* address);
+#define EMPTY_TABLE_ENTRY_FLAGS PRESENT | READ_WRITE | USER_SUPERVISOR
+
+
+PageEntry createTableEntry(void* address, uint32_t flags);
 PageEntry* createPageTable(PageEntry* pageTableAddress, void* pageAddress);
 PageEntry* createPageDirectory(PageEntry* pageDirectoryAddress);
+
+void* getPhysicalAddress(PageEntry* pageDirectoryAddress, void* linearAddress);
+void mapLinearAddress(PageEntry* pageDirectoryAddress, void* physicalAddress, void* linearAddress, uint32_t flags);
 
 #endif
