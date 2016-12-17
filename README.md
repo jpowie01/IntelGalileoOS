@@ -6,13 +6,13 @@ This is repository for basic Operating System written for Intel Galileo (i586).
 ### Requirements
 
 All you need is:
-- make
-- qemu
+- Make
+- QEMU
 - EDKII environment
 
 ### Prepare your environment
 
-To start the development precess you've got to prepare EDKII environment using instructions from [documentation](https://wiki.ubuntu.com/UEFI/EDK2#Initial_set_up). *Please follow ONLY the section named "Initial set up"!* While preparing build target setup please use these entries:
+To start the development precess you've got to prepare EDKII environment using instructions from [documentation](https://wiki.ubuntu.com/UEFI/EDK2#Initial_set_up). **Please follow ONLY the section named "Initial set up"!** While preparing build target setup please use these entries:
 
 ```
 ACTIVE_PLATFORM = IntelGalileoOS/IntelGalileoOS.dsc
