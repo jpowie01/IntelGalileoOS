@@ -8,9 +8,9 @@
 
 #include <stdint.h>
 
-uint32_t getCR0();
-uint32_t getCR3();
-void setCR3(void* address);
-void enablePaging();
+extern uint32_t getCR0();
+extern uint32_t getCR3();
+extern void setCR3(void* address);
+extern void enablePaging();
 
 #endif

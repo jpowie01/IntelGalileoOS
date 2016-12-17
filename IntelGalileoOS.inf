@@ -1,0 +1,38 @@
+#
+#    IntelGalileoOS
+#    Created by: Jakub Powierza
+#
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = IntelGalileoOS
+  MODULE_UNI_FILE                = IntelGalileoOS.uni
+  FILE_GUID                      = 6987936E-ED34-44db-AE97-1FA5E4ED2116
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = UefiMain
+
+#
+#  This flag specifies whether HII resource section is generated into PE image.
+#
+  UEFI_HII_RESOURCE_SECTION      = TRUE
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  src/main.c
+  src/File.c
+  src/PageDirectory.c
+  src/AssemblyHelper.S
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiLib

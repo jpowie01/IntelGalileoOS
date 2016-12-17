@@ -15,9 +15,7 @@ void printCatalog(CHAR16* directoryPath, EFI_HANDLE ImageHandle, EFI_BOOT_SERVIC
 	EFI_GUID loadedImageProtocol = LOADED_IMAGE_PROTOCOL;
 	status = BootServices->HandleProtocol(ImageHandle, &loadedImageProtocol, (void**)&loadedImage);
 	if (status != EFI_SUCCESS) {
-		CHAR16* error = NULL;
-		StatusToString(error, status);
-		Print(L"Reading image failed (Status: %x Error: %s)\n", status, error);
+		Print(L"Reading image failed (Status: %x)\n", status);
 		return;
 	}
 
@@ -26,9 +24,7 @@ void printCatalog(CHAR16* directoryPath, EFI_HANDLE ImageHandle, EFI_BOOT_SERVIC
 	EFI_GUID simpleFileSystemProtocol = SIMPLE_FILE_SYSTEM_PROTOCOL;
 	status = BootServices->HandleProtocol(loadedImage->DeviceHandle, &simpleFileSystemProtocol, (void**)&ioInterface);
 	if (status != EFI_SUCCESS) {
-		CHAR16* error = NULL;
-		StatusToString(error, status);
-		Print(L"Handling protocol failed (Status: %x Error: %s)\n", status, error);
+		Print(L"Handling protocol failed (Status: %x)\n", status);
 		return;
 	}
 
@@ -36,9 +32,7 @@ void printCatalog(CHAR16* directoryPath, EFI_HANDLE ImageHandle, EFI_BOOT_SERVIC
 	EFI_FILE* root = NULL;
 	status = ioInterface->OpenVolume(ioInterface, &root);
 	if (status != EFI_SUCCESS) {
-		CHAR16* error = NULL;
-		StatusToString(error, status);
-		Print(L"Getting root directory failed (Status: %x Error: %s)\n", status, error);
+		Print(L"Getting root directory failed (Status: %x)\n", status);
 		return;
 	}
 
@@ -46,19 +40,17 @@ void printCatalog(CHAR16* directoryPath, EFI_HANDLE ImageHandle, EFI_BOOT_SERVIC
 	EFI_FILE* directory = NULL;
 	status = root->Open(root, &directory, directoryPath, EFI_FILE_MODE_READ, 0);
 	if (status != EFI_SUCCESS) {
-		CHAR16* error = NULL;
-		StatusToString(error, status);
-		Print(L"Opening directory failed (Status: %x Error: %s)\n", status, error);
+		Print(L"Opening directory failed (Status: %x)\n", status);
 		return;
 	}
 
 	// Get directory info
-	// char infoBuffer[512];
-	// EFI_GUID guid = EFI_FILE_INFO_ID;
-	// UINTN infoBufferSize = sizeof(infoBuffer);
-	// EFI_FILE_INFO* fileInfo = (void*)infoBuffer;
-	// status = directory->GetInfo(directory, &guid, &infoBufferSize, fileInfo);
-	// Print(L"BufferSize: %x Size: %lx FileSize: %lx\nAttribute: %lx\nFileName: %s\n", infoBufferSize, fileInfo->Size, fileInfo->FileSize, fileInfo->Attribute, fileInfo->FileName);
+	char infoBuffer[512];
+	EFI_GUID guid = EFI_FILE_INFO_ID;
+	UINTN infoBufferSize = sizeof(infoBuffer);
+	EFI_FILE_INFO* fileInfo = (void*)infoBuffer;
+	status = directory->GetInfo(directory, &guid, &infoBufferSize, fileInfo);
+	Print(L"BufferSize: %x Size: %lx FileSize: %lx\nAttribute: %lx\nFileName: %s\n", infoBufferSize, fileInfo->Size, fileInfo->FileSize, fileInfo->Attribute, fileInfo->FileName);
 
 	// List all entries
 	char directoryEntryBuffer[512];
@@ -68,9 +60,7 @@ void printCatalog(CHAR16* directoryPath, EFI_HANDLE ImageHandle, EFI_BOOT_SERVIC
 		directoryBufferSize = sizeof(directoryEntryBuffer);
 		status = directory->Read(directory, &directoryBufferSize, (void*)directoryEntry);
 		if (status != EFI_SUCCESS) {
-			CHAR16* error = NULL;
-			StatusToString(error, status);
-			Print(L"Error while reading directory entry (Status: %x Error: %s)\n", status, error);
+			Print(L"Error while reading directory entry (Status: %x)\n", status);
 			break;
 		}
 		if (directoryBufferSize == 0) {
