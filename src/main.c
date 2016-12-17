@@ -3,17 +3,16 @@
     Created by: Jakub Powierza
 */
 
-#include <efi.h>
-#include <efilib.h>
+#include <Uefi.h>
+#include <Library/UefiLib.h>
 
 #include "PageDirectory.h"
 #include "AssemblyHelper.h"
 #include "File.h"
 
 
-EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
+EFI_STATUS EFIAPI UefiMain(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	// Initialize
-	InitializeLib(ImageHandle, SystemTable);
 	Print(L"Starting...\n");
 
 	// Prepare Page Directory with all Page Tables

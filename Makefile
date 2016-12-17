@@ -3,48 +3,26 @@
 # Created by: Jakub Powierza
 #
 
-ARCH            = $(shell uname -m | sed s,i[3456789]86,ia32,)
+EDKII_BUILD_COMMAND = build
+EDKII_BUILD_DIRECTORY = Build/IntelGalileoOS/DEBUG_GCC5/IA32
 
-OBJS            = src/main.o src/PageDirectory.o src/AssemblyHelper.o src/File.o
-HEADERS         = src/PageDirectory.h src/AssemblyHelper.h src/File.h
-TARGET          = build/main.efi
+CURRENT_DIRECTORY = "$(shell pwd)"
+BUILD_DIRECTORY = build
+EFI_FILE = IntelGalileoOS.efi
+OVMF_IMAGE = bin/OVMF.fd
 
-EFIINC          = lib/gnu-efi/inc
-EFIINCS         = -I$(EFIINC) -I$(EFIINC)/$(ARCH) -I$(EFIINC)/protocol
-LIB             = lib/gnu-efi/ia32/lib
-EFILIB          = lib/gnu-efi/gnuefi
-EFI_CRT_OBJS    = $(EFILIB)/crt0-efi-$(ARCH).o
-EFI_LDS         = $(EFILIB)/elf_$(ARCH)_efi.lds
-
-CFLAGS          = $(EFIINCS) -fno-stack-protector -fpic -fshort-wchar -mno-red-zone -Wall -masm=intel
-
-ifeq ($(ARCH),x86_64)
-	CFLAGS += -DEFI_FUNCTION_WRAPPER
-endif
-
-LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared -Bsymbolic -L $(EFILIB) -L $(LIB) $(EFI_CRT_OBJS)
-
-all: $(TARGET)
-
-build: $(TARGET)
+all: build
 
 develop:
-	mkdir build
+	mkdir -p $(BUILD_DIRECTORY)
 
-src/%.so: $(OBJS) $(HEADERS)
-	ld $(LDFLAGS) $(OBJS) -o $@ -l:libefi.a -l:libgnuefi.a
-
-build/%.efi: src/%.so
-	objcopy -j .text -j .sdata -j .data -j .dynamic \
-		-j .dynsym  -j .rel -j .rela -j .reloc \
-		--target=efi-app-$(ARCH) $^ $@
+build: develop
+	cd .. && $(EDKII_BUILD_COMMAND) && cp ./$(EDKII_BUILD_DIRECTORY)/$(EFI_FILE) $(CURRENT_DIRECTORY)/$(BUILD_DIRECTORY)/$(EFI_FILE)
 
 run:
-	qemu-system-i386 -bios bin/OVMF.fd -hda fat:build
+	qemu-system-i386 -bios $(OVMF_IMAGE) -hda fat:$(BUILD_DIRECTORY)
 
 clean:
-	rm -rf build
-	rm -f *.o
-	rm -f *.so
+	rm -rf $(BUILD_DIRECTORY)
 
 .PHONY: all build develop run clean

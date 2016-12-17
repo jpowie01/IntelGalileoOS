@@ -6,8 +6,8 @@
 #ifndef _PAGE_DIRECTORY_H
 #define _PAGE_DIRECTORY_H
 
-#include <efi.h>
-#include <efilib.h>
+#include <Uefi.h>
+#include <Library/UefiLib.h>
 #include <stdint.h>
 #include <stdlib.h>
 
