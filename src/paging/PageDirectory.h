@@ -11,8 +11,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-
 typedef uint32_t PageEntry;
+
+#define PAGING_ENABLED	1
+#define PAGING_DISABLED	0
 
 #define PRESENT                 1 << 0
 #define READ_WRITE              1 << 1  // 0 = READ, 1 = READ & WRITE
@@ -33,7 +35,6 @@ typedef uint32_t PageEntry;
 #define PAGE_SIZE               4096  // 4 KB
 
 #define EMPTY_TABLE_ENTRY_FLAGS PRESENT | READ_WRITE | USER_SUPERVISOR
-
 
 PageEntry createTableEntry(void* address, uint32_t flags);
 PageEntry* createPageTable(PageEntry* pageTableAddress, void* pageAddress);
