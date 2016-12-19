@@ -5,42 +5,102 @@
 
 #include <Uefi.h>
 #include <Library/UefiLib.h>
+#include <Library/BaseLib.h>
 
-#include "PageDirectory.h"
-#include "AssemblyHelper.h"
-#include "File.h"
+#include "paging/PageDirectory.h"
+#include "paging/AssemblyHelper.h"
+#include "filesystem/fat/File.h"
+#include "keyboard/Keyboard.h"
 
 
 EFI_STATUS EFIAPI UefiMain(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
-	// Initialize
-	Print(L"Starting...\n");
+	// Clear the screen
+	SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
 
-	// Prepare Page Directory with all Page Tables
-	Print(L"CR0: %x CR3: %x\n", getCR0(), getCR3());
-	createPageDirectory(PAGE_DIRECTORY_ADDRESS);
-	setCR3((void*)PAGE_DIRECTORY_ADDRESS);
-	Print(L"Everything is prepared.\n");
+	// Initialize and print header
+	Print(L"\n Intel Galileo OS\n");
+	Print(L" Created by: Jakub Powierza\n");
+	Print(L"============================\n");
 
-	// Turn on paging
-	Print(L"Enabling paging...\n");
-	enablePaging();
-	Print(L"CR0: %x CR3: %x\n", getCR0(), getCR3());
-	Print(L"Done!\nShould work like a charm!\n");
+	// Settings
+	UINT8 paging = PAGING_DISABLED;
 
-	// Test everything
-	Print(L"Testing...\n");
-	Print(L"Physical address for linear address (0xE0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xE0000000));
-	Print(L"Physical address for linear address (0xD0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xD0000000));
-	Print(L"Mapping linear address (0xE0000000) to physical address (0xD0000000)...\n");
-	mapLinearAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xD0000000, (void*)0xE0000000, EMPTY_TABLE_ENTRY_FLAGS);
-	Print(L"Mapping linear address (0xD0000000) to physical address (0xE0000000)...\n");
-	mapLinearAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xE0000000, (void*)0xD0000000, EMPTY_TABLE_ENTRY_FLAGS);
-	Print(L"Physical address for linear address (0xE0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xE0000000));
-	Print(L"Physical address for linear address (0xD0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xD0000000));
-	Print(L"Done.\n");
+	// Never ending loop of reading commands from keyboard
+	CHAR16 command[MAX_STRING_FROM_KEYBOARD];
+	do {
+		// Prompt key
+		Print(L" > ");
 
-	// Print list of all files in a root directory
-	printCatalog(L"\\", ImageHandle, SystemTable->BootServices);
+		// Read command
+		readStringFromKeyboard(SystemTable, command);
+
+		// Print registers
+		if (StrCmp(command, L"registers") == 0) {
+			Print(L"CR0: %x\nCR3: %x\n", getCR0(), getCR3());
+			continue;
+		}
+
+		if (StrCmp(command, L"turn_on_paging") == 0) {
+			// Prepare Page Directory with all Page Tables
+			Print(L"Creating all tables... ");
+			createPageDirectory(PAGE_DIRECTORY_ADDRESS);
+			setCR3((void*)PAGE_DIRECTORY_ADDRESS);
+			Print(L"Done.\n");
+
+			// Turn on paging
+			Print(L"Enabling paging... ");
+			enablePaging();
+			paging = PAGING_ENABLED;
+			Print(L"Done.\n");
+			Print(L"Paging enabled properly!\n");
+			continue;
+		}
+
+		if (StrCmp(command, L"check_paging") == 0) {
+			// Make sure that paging is enabled
+			if (paging == PAGING_DISABLED) {
+				Print(L"Turn on paging first!\n");
+				continue;
+			}
+
+			// Try to switch two physical addresses
+			Print(L"Physical address for linear address (0xE0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xE0000000));
+			Print(L"Physical address for linear address (0xD0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xD0000000));
+			Print(L"Mapping linear address (0xE0000000) to physical address (0xD0000000)...\n");
+			mapLinearAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xD0000000, (void*)0xE0000000, EMPTY_TABLE_ENTRY_FLAGS);
+			Print(L"Mapping linear address (0xD0000000) to physical address (0xE0000000)...\n");
+			mapLinearAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xE0000000, (void*)0xD0000000, EMPTY_TABLE_ENTRY_FLAGS);
+			Print(L"Physical address for linear address (0xE0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xE0000000));
+			Print(L"Physical address for linear address (0xD0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xD0000000));
+			continue;
+		}
+
+		// List all entries in directory
+		if (StrCmp(command, L"ls") == 0) {
+			printFATCatalog(L"\\", ImageHandle, SystemTable->BootServices);
+			continue;
+		}
+
+		// Clear the screen
+		if (StrCmp(command, L"clear") == 0) {
+			SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
+			continue;
+		}
+
+		// Print author of this OS
+		if (StrCmp(command, L"author") == 0) {
+			Print(L"Author: Jakub Powierza (github.com/jpowie01)\n");
+			continue;
+		}
+
+		// Exit from OS
+		if (StrCmp(command, L"exit") == 0) {
+			break;
+		}
+
+		// Information about invalid command
+		Print(L"Invalid command. Please try again!\n");
+	} while (1);
 
 	// End of program
 	Print(L"Exit...\n");

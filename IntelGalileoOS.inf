@@ -25,9 +25,11 @@
 
 [Sources]
   src/main.c
-  src/File.c
-  src/PageDirectory.c
-  src/AssemblyHelper.S
+  src/paging/PageDirectory.c
+  src/paging/AssemblyHelper.S
+  src/filesystem/fat/File.c
+  src/filesystem/ntfs/File.c
+  src/keyboard/Keyboard.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -36,3 +38,4 @@
 [LibraryClasses]
   UefiApplicationEntryPoint
   UefiLib
+  BaseLib

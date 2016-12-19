@@ -21,7 +21,6 @@ PageEntry* createPageTable(PageEntry* pageTableAddress, void* pageAddress) {
 }
 
 PageEntry* createPageDirectory(PageEntry* pageDirectoryAddress) {
-	Print(L"Creating Page Directory...\n");
 	PageEntry* pageTableAddress = pageDirectoryAddress + PAGE_TABLE_SIZE;
 	void* pageAddress = 0x00000000;
 	for (int i = 0; i < PAGE_TABLE_LENGTH; i++) {
@@ -30,7 +29,6 @@ PageEntry* createPageDirectory(PageEntry* pageDirectoryAddress) {
 		pageTableAddress += PAGE_TABLE_SIZE;
 		pageAddress += PAGE_TABLE_LENGTH * PAGE_SIZE;
 	}
-	Print(L"Done.\n");
 	return pageDirectoryAddress;
 }
 
