@@ -10,6 +10,8 @@
 #include "paging/PageDirectory.h"
 #include "paging/AssemblyHelper.h"
 #include "filesystem/fat/File.h"
+#include "filesystem/ntfs/File.h"
+#include "filesystem/partitions/Gpt.h"
 #include "keyboard/Keyboard.h"
 
 
@@ -24,6 +26,9 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
 	// Settings
 	UINT8 paging = PAGING_DISABLED;
+
+	// Generate list of partitions for disk operations
+	prepareListOfGptPartitions(SystemTable->BootServices);
 
 	// Never ending loop of reading commands from keyboard
 	CHAR16 command[MAX_STRING_FROM_KEYBOARD];
@@ -75,9 +80,31 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 			continue;
 		}
 
-		// List all entries in directory
+		// List all entries in root directory of partition
 		if (StrCmp(command, L"ls") == 0) {
-			printFATCatalog(L"\\", ImageHandle, SystemTable->BootServices);
+			Print(L"Partition number: ");
+			readStringFromKeyboard(SystemTable, command);
+			UINT8 partitionNumber = command[0] - 48; // FIXME: Only one digit works for now...
+			if (partitionNumber < 0 || partitionNumber >= amountOfPartitions) {
+				Print(L"Invalid partition number.\n");
+				continue;
+			}
+
+			// Get partition and print root directory
+			GPTPartition partition = listOfPartitions[partitionNumber];
+			if (partition.type == FAT_PARTITION) {
+				printFATCatalog(L"\\", partition.deviceHandle, SystemTable->BootServices);
+			} else if (partition.type == NTFS_PARTITION) {
+				printNTFSCatalog(L"\\", partition.deviceHandle, SystemTable->BootServices);
+			} else {
+				Print(L"Unknown partition type.\n");
+			}
+			continue;
+		}
+
+		// List all GPT partitions
+		if (StrCmp(command, L"partitions") == 0) {
+			printGptPartitions();
 			continue;
 		}
 

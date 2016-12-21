@@ -4,25 +4,16 @@
 */
 
 #include "File.h"
+#include "../partitions/Gpt.h"
 
-void printFATCatalog(CHAR16* directoryPath, EFI_HANDLE ImageHandle, EFI_BOOT_SERVICES* BootServices) {
+void printFATCatalog(CHAR16* directoryPath, EFI_HANDLE deviceHandle, EFI_BOOT_SERVICES* BootServices) {
 	// Some logs
 	Print(L"Listing all files from directory \"%s\"...\n", directoryPath);
-
-	// Get running image
-	EFI_STATUS status = EFI_SUCCESS;
-	EFI_LOADED_IMAGE* loadedImage = NULL;
-	EFI_GUID loadedImageProtocol = LOADED_IMAGE_PROTOCOL;
-	status = BootServices->HandleProtocol(ImageHandle, &loadedImageProtocol, (void**)&loadedImage);
-	if (status != EFI_SUCCESS) {
-		Print(L"Reading image failed (Status: %x)\n", status);
-		return;
-	}
 
 	// Get interface for IO
 	EFI_FILE_IO_INTERFACE* ioInterface = NULL;
 	EFI_GUID simpleFileSystemProtocol = SIMPLE_FILE_SYSTEM_PROTOCOL;
-	status = BootServices->HandleProtocol(loadedImage->DeviceHandle, &simpleFileSystemProtocol, (void**)&ioInterface);
+	EFI_STATUS status = BootServices->HandleProtocol(deviceHandle, &simpleFileSystemProtocol, (void**)&ioInterface);
 	if (status != EFI_SUCCESS) {
 		Print(L"Handling protocol failed (Status: %x)\n", status);
 		return;
@@ -43,14 +34,6 @@ void printFATCatalog(CHAR16* directoryPath, EFI_HANDLE ImageHandle, EFI_BOOT_SER
 		Print(L"Opening directory failed (Status: %x)\n", status);
 		return;
 	}
-
-	// // Get directory info
-	// char infoBuffer[512];
-	// EFI_GUID guid = EFI_FILE_INFO_ID;
-	// UINTN infoBufferSize = sizeof(infoBuffer);
-	// EFI_FILE_INFO* fileInfo = (void*)infoBuffer;
-	// status = directory->GetInfo(directory, &guid, &infoBufferSize, fileInfo);
-	// Print(L"BufferSize: %x Size: %lx FileSize: %lx\nAttribute: %lx\nFileName: %s\n", infoBufferSize, fileInfo->Size, fileInfo->FileSize, fileInfo->Attribute, fileInfo->FileName);
 
 	// List all entries
 	char directoryEntryBuffer[512];

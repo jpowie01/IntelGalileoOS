@@ -29,6 +29,7 @@
   src/paging/AssemblyHelper.S
   src/filesystem/fat/File.c
   src/filesystem/ntfs/File.c
+  src/filesystem/partitions/Gpt.c
   src/keyboard/Keyboard.c
 
 [Packages]
