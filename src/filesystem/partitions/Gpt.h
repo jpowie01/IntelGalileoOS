@@ -17,11 +17,11 @@
 #define UNKNOWN_PARTITION   0x03
 
 typedef struct {
-  EFI_HANDLE deviceHandle;
-  UINT32 mediaId;
-  UINTN blockSize;
-  UINT64 size;
-  UINT8 type;
+	EFI_HANDLE deviceHandle;
+	UINT32 mediaId;
+	UINTN blockSize;
+	UINT64 size;
+	UINT8 type;
 } GPTPartition;
 
 extern UINTN amountOfPartitions;
