@@ -86,7 +86,7 @@ void prepareListOfGptPartitions(EFI_BOOT_SERVICES* BootServices) {
       listOfPartitions[amountOfPartitions].deviceHandle = deviceHandle;
       listOfPartitions[amountOfPartitions].mediaId = media->MediaId;
       listOfPartitions[amountOfPartitions].blockSize = media->BlockSize;
-      listOfPartitions[amountOfPartitions].lastBlock = media->LastBlock;
+      listOfPartitions[amountOfPartitions].size = media->BlockSize * media->LastBlock;
 
     	// Read first block of data from disk
     	UINTN bufferSize = media->BlockSize;
@@ -110,7 +110,8 @@ void prepareListOfGptPartitions(EFI_BOOT_SERVICES* BootServices) {
 
 void printGptPartitions() {
   for (int i = 0; i < amountOfPartitions; i++) {
-    Print(L"Partition %x: %x Block Size: %x Last Block: %x Type: ", i, listOfPartitions[i].deviceHandle, listOfPartitions[i].blockSize, listOfPartitions[i].lastBlock);
+    UINT64 sizeInMB = listOfPartitions[i].size / 1024 / 1024;
+    Print(L"Partition %d (Handle: 0x%08x) Block: %dB Size: %dMB Type: ", i, listOfPartitions[i].deviceHandle, listOfPartitions[i].blockSize, sizeInMB);
     if (listOfPartitions[i].type == NTFS_PARTITION) {
       Print(L"NTFS\n");
     } else if (listOfPartitions[i].type == FAT_PARTITION) {

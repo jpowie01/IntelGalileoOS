@@ -20,7 +20,7 @@ typedef struct {
   EFI_HANDLE deviceHandle;
   UINT32 mediaId;
   UINTN blockSize;
-  UINTN lastBlock;
+  UINT64 size;
   UINT8 type;
 } GPTPartition;
 

@@ -16,8 +16,9 @@
 
 
 EFI_STATUS EFIAPI UefiMain(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
-	// Clear the screen
+	// Clear the screen and turn off watchdog
 	SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
+	SystemTable->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
 
 	// Initialize and print header
 	Print(L"\n Intel Galileo OS\n");
@@ -41,7 +42,7 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
 		// Print registers
 		if (StrCmp(command, L"registers") == 0) {
-			Print(L"CR0: %x\nCR3: %x\n", getCR0(), getCR3());
+			Print(L"CR0: 0x%08x\nCR3: 0x%08x\n", getCR0(), getCR3());
 			continue;
 		}
 
@@ -69,14 +70,20 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 			}
 
 			// Try to switch two physical addresses
-			Print(L"Physical address for linear address (0xE0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xE0000000));
-			Print(L"Physical address for linear address (0xD0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xD0000000));
+			Print(L"Physical address for linear address (0xE0000000): 0x%08x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xE0000000));
+			Print(L"Physical address for linear address (0xD0000000): 0x%08x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xD0000000));
 			Print(L"Mapping linear address (0xE0000000) to physical address (0xD0000000)...\n");
 			mapLinearAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xD0000000, (void*)0xE0000000, EMPTY_TABLE_ENTRY_FLAGS);
 			Print(L"Mapping linear address (0xD0000000) to physical address (0xE0000000)...\n");
 			mapLinearAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xE0000000, (void*)0xD0000000, EMPTY_TABLE_ENTRY_FLAGS);
-			Print(L"Physical address for linear address (0xE0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xE0000000));
-			Print(L"Physical address for linear address (0xD0000000): %x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xD0000000));
+			Print(L"Physical address for linear address (0xE0000000): 0x%08x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xE0000000));
+			Print(L"Physical address for linear address (0xD0000000): 0x%08x\n", getPhysicalAddress(PAGE_DIRECTORY_ADDRESS, (void*)0xD0000000));
+			continue;
+		}
+
+		// List all GPT partitions
+		if (StrCmp(command, L"partitions") == 0) {
+			printGptPartitions();
 			continue;
 		}
 
@@ -90,21 +97,17 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 				continue;
 			}
 
-			// Get partition and print root directory
+			// Get partition and print any directory
 			GPTPartition partition = listOfPartitions[partitionNumber];
 			if (partition.type == FAT_PARTITION) {
-				printFATCatalog(L"\\", partition.deviceHandle, SystemTable->BootServices);
+				Print(L"Enter directory path: ");
+				readStringFromKeyboard(SystemTable, command);
+				printFATCatalog(command, partition.deviceHandle, SystemTable->BootServices);
 			} else if (partition.type == NTFS_PARTITION) {
 				printNTFSCatalog(L"\\", partition.deviceHandle, SystemTable->BootServices);
 			} else {
 				Print(L"Unknown partition type.\n");
 			}
-			continue;
-		}
-
-		// List all GPT partitions
-		if (StrCmp(command, L"partitions") == 0) {
-			printGptPartitions();
 			continue;
 		}
 
@@ -116,7 +119,23 @@ EFI_STATUS EFIAPI UefiMain(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
 		// Print author of this OS
 		if (StrCmp(command, L"author") == 0) {
-			Print(L"Author: Jakub Powierza (github.com/jpowie01)\n");
+			Print(L"Jakub Powierza (github.com/jpowie01)\n");
+			continue;
+		}
+
+		// Show help with all commands
+		if (StrCmp(command, L"help") == 0 || StrCmp(command, L"?") == 0) {
+			Print(L"\n All available commands\n");
+			Print(L"-------------------------------------------------------\n");
+			Print(L" registers - Print CR0 & CR3 registers\n");
+			Print(L" turn_on_paging - Create all tables & turns on paging\n");
+			Print(L" check_paging - Run quick test for paging\n");
+			Print(L" partitions - List all GPT partitions available\n");
+			Print(L" ls - List files from root directory\n");
+			Print(L" clear - Clear screen\n");
+			Print(L" author - Print author\n");
+			Print(L" help - List all commands\n");
+			Print(L" exit - Exit from OS\n");
 			continue;
 		}
 
